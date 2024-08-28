@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
-const { ObjectId } = Schema.Types;
+
 
 const studentsSchema = new Schema({
     firstName: String,
@@ -12,10 +12,13 @@ const studentsSchema = new Schema({
     program: String,
     background: String,
     image: String,
-    cohort: ObjectId,
+    cohort :{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Cohort"
+    },
     projects: Array
   });
 
-  const Student = mongoose.model("Student", studentsSchema);
+const Student = mongoose.model("Student", studentsSchema);
 
 module.exports = Student;
