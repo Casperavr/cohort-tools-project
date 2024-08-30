@@ -3,7 +3,10 @@ const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 const PORT = 5005;
 const cors = require("cors");
-const mongoose = require("mongoose")
+const mongoose = require("mongoose");
+
+// Import the custom error handling middleware:
+const { errorHandler, notFoundHandler } = require('./middleware/middleware/error-handling');
 
 
 const Cohort = require("./models/Cohort.model");
@@ -34,6 +37,7 @@ app.use(express.static("public"));
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
+
 // MONGOOSE
 // establish connection
 
@@ -56,7 +60,7 @@ app.get("/docs", (req, res) => {
 //
 
 // creates a new student
-app.post("/api/students", (req, res, next) => {
+app.post("/api/students", ( req, res, next) => {
   const newStudent = req.body;
   Student.create(newStudent)
     .then((newStudentFromDB) => {
@@ -66,11 +70,12 @@ app.post("/api/students", (req, res, next) => {
     .catch((error) => {
       console.log("Uh Oh... Error creating student.");
       res.status(500).json({error: "error creating student"});
+      next(error);
     })
 })
 
 // retrieves all of the students in the database collection
-app.get('/api/students', (req, res) => {
+app.get('/api/students', (req, res, next) => {
   // res.json(students);
   Student.find({})
     .populate("cohort")
@@ -82,6 +87,7 @@ app.get('/api/students', (req, res) => {
     .catch((error) => {
       console.error("Error while retrieving students ->", error);
       res.status(500).json({ error: "Failed to retrieve students" });
+      next(error);
     });
 })
 
@@ -98,6 +104,7 @@ app.get("/api/students/cohort/:cohortId", (req, res, next) => {
     .catch((error) => {
       console.error("Error while retrieving students ->", error);
       res.status(500).json({ error: "Failed to retrieve students" });
+      next(error);
     })
 })
 
@@ -113,28 +120,31 @@ app.get("/api/students/:studentId", (req, res, next) => {
     .catch((error) => {
       console.error("Error while retrieving students ->", error);
       res.status(500).json({ error: "Failed to retrieve students" });
+      next(error);
     })
 })
 
 // updates a specific student by id
-app.put("/api/students/:studentId", (req, res) => {
+app.put("/api/students/:studentId", (req, res, next) => {
   Student.findByIdAndUpdate(req.params.studentId, req.body, { new: true })
     .then((updatedStudent) => {
       res.status(200).json(updatedStudent);
     })
     .catch((error) => {
       res.status(500).json({ message: "Error while updating a single student" });
+      next(error);
     });
 });
 
 // deletes a specific student by id
-app.delete("/api/students/:studentId", (req, res) => {
+app.delete("/api/students/:studentId", (req, res, next) => {
   Student.findByIdAndDelete(req.params.studentId)
   .then(() => {
     res.status(204).send();
   })
   .catch((error) => {
     res.status(500).json({ message: "Error while deleting a single student"});
+    next(error);
   });
 });
 
@@ -154,11 +164,12 @@ app.post("/api/cohorts", (req, res, next) => {
     .catch((error) => {
       console.log("Uh Oh... Error creating cohort.");
       res.status(500).json({error: "error creating cohort"});
+      next(error);
     })
 })
 
 // retrieves all of the cohorts in the database collection
-app.get("/api/cohorts", (req, res) => {
+app.get("/api/cohorts", (req, res, next) => {
   // res.json(cohorts)
   Cohort.find({})
     .then((cohorts) => {
@@ -169,6 +180,7 @@ app.get("/api/cohorts", (req, res) => {
     .catch((error) => {
       console.error("Error while retrieving cohorts -> ", error);
       res.status(500).json({error: "Failed to retrieve cohorts"});
+      next(error);
     });
 });
 
@@ -183,30 +195,37 @@ app.get("/api/cohorts/:cohortId", (req, res, next) => {
   .catch((error) => {
     console.error("Error while retrieving cohorts ->", error);
     res.status(500).json({ error: "Failed to retrieve cohorts" });
+    next(error);
   })
 })
 
 // updates a specific cohort by id
-app.put("/api/cohorts/:cohortId", (req, res) => {
+app.put("/api/cohorts/:cohortId", (req, res, next) => {
   Cohort.findByIdAndUpdate(req.params.cohortId, req.body, { new: true })
     .then((updatedCohort) => {
       res.status(200).json(updatedCohort);
     })
     .catch((error) => {
       res.status(500).json({ message: "Error while updating a single cohort" });
+      next(error);
     });
 });
 
 // deletes a specific cohort by id
-app.delete("/api/cohorts/:cohortId", (req, res) => {
+app.delete("/api/cohorts/:cohortId", (req, res, next) => {
   Cohort.findByIdAndDelete(req.params.cohortId)
   .then(() => {
     res.status(204).send();
   })
   .catch((error) => {
     res.status(500).json({ message: "Error while deleting a single cohort"});
+    next(error);
   });
 });
+
+// Set up custom error handling middleware:
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 // START SERVER
 app.listen(PORT, () => {
